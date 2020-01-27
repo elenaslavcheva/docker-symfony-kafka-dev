@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  kafka:
+    image: lensesio/fast-data-dev:latest
+    build:
+      context: "https://github.com/lensesio/fast-data-dev.git"
+      args: 
+        SAMPLEDATA: "0"
+    ports:
+      - '2181:2181'
+      - '3030:3030'
+      - '8081:8081'
+      - '8082:8082'
+      - '8083:8083'
+      - '9092:9092'
+    expose: 
+      - '2181'
+      - '8081'
+      - '8082'
+      - '8083'
+      - '9092'
+  web:
+    build: build/nginx
+    restart: always
+    ports:
+        - '81:80'
+    volumes:
+        - ./:/var/www/html
+        - ./logs:/var/log/nginx
+  php:
+    build: build/php
+    expose:
+      - '9000'
+    depends_on:
+      - db
+      - kafka
+    volumes:
+      - ./:/var/www/html
+      - ./logs:/var/log
+  db:
+    image: mysql/mysql-server:latest
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_ROOT_HOST=${MYSQL_ROOT_HOST}
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
